@@ -24,7 +24,7 @@ Show front side of the card on Jupyter Notebook. Images are also included (no ne
 Back side of the card is show. Also render images, markdown and HTML.
 
 ```
-In the case, the images are always cached at `foo/` folder for offline use.
+In this case, the images are always cached at `foo/` folder for offline use.
 
 It seems that `pyexcel-handsontable` isn't working offline, but everything else should be OK offline.
 
