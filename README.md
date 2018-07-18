@@ -2,6 +2,8 @@
 
 Jupyter notebook utility to view flashcards in both Excel and markdown format.
 
+Not to mention that both the `*.xlsx` file and the image folder are directly editable.
+
 ## Usage
 
 ```python
@@ -21,6 +23,10 @@ Back side of the card is show. Also render images and HTML.
 
 ```
 For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/README.md
+
+## Excel file
+
+It must be an Excel file with a worksheet named `flashcards` and has a first row of ['id', 'Front', 'Back', 'Keywords', 'Tags']. After the first row, every row must have an id specified. Id can be anything, including string.
 
 ## Screenshots
 
