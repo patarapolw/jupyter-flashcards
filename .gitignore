@@ -223,7 +223,7 @@ venv.bak/
 
 # user
 user.*
-user/*
+# user/*
 
 # Auto-generated files
 *.tex
