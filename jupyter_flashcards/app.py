@@ -118,13 +118,67 @@ class Flashcards:
         item_id = int(time() * 1000)
         self.data[str(item_id)] = CardTuple(id=item_id)
 
-        return self.update(item_id, **kwargs)
+        return self.append(item_id, **kwargs)
+
+    def append(self, item_id, **kwargs):
+        """
+
+        :param int|str item_id:
+        :param kwargs:
+        :return:
+        """
+        item_id = str(item_id)
+
+        if item_id not in self.data.keys():
+            raise KeyError("Cannot append to {}.".format(item_id))
+
+        if self.data[item_id].Keywords:
+            orig_keywords = self.data[item_id].Keywords
+        else:
+            orig_keywords = ''
+
+        if self.data[item_id].Tags:
+            orig_tags = self.data[item_id].Tags
+        else:
+            orig_tags = ''
+
+        kwargs['Keywords'] = to_raw_tags(tag_reader(orig_keywords)
+                                         .add(to_raw_tags(kwargs.get('Keywords', []))))
+        kwargs['Tags'] = to_raw_tags(tag_reader(orig_tags)
+                                     .add(to_raw_tags(kwargs.get('Tags', []))))
+
+        orig_front = self.data[item_id].Front
+        orig_back = self.data[item_id].Back
+
+        if orig_front and orig_front[-1] != '\n':
+            kwargs['Front'] = orig_front + '\n' + kwargs.get('Front', '')
+        else:
+            kwargs['Front'] = orig_front + kwargs.get('Front', '')
+
+        if orig_back and orig_back[-1] != '\n':
+            kwargs['Back'] = orig_back + '\n' + kwargs.get('Back', '')
+        else:
+            kwargs['Back'] = orig_back + kwargs.get('Back', '')
+
+        self._cache_image(item_id, kwargs['Front'])
+        self._cache_image(item_id, kwargs['Back'])
+
+        self.data[item_id]._update(kwargs)
+
+        self.save()
+
+        return self._preview_entries(self.data[item_id])
 
     def update(self, item_id: int, **kwargs):
         item_id = str(item_id)
 
-        kwargs['Keywords'] = to_raw_tags(kwargs.get('Keywords', []))
-        kwargs['Tags'] = to_raw_tags(kwargs.get('Tags', []))
+        if item_id not in self.data.keys():
+            raise KeyError("Cannot reset to {}.".format(item_id))
+
+        if 'Keywords' in kwargs.keys():
+            kwargs['Keywords'] = to_raw_tags(kwargs['Keywords'])
+        if 'Tags' in kwargs.keys():
+            kwargs['Tags'] = to_raw_tags(kwargs['Tags'])
 
         self._cache_image(item_id, kwargs.get('Front', ''))
         self._cache_image(item_id, kwargs.get('Back', ''))
@@ -144,10 +198,16 @@ class Flashcards:
                 cache_image_from_url(image_name=image_name, image_url=url, image_dir=self.image_dir)
 
     def remove(self, item_id):
+        item_id = str(item_id)
+
+        if item_id not in self.data.keys():
+            raise KeyError("Cannot append to {}.".format(item_id))
+
         self.data.pop(item_id)
+        self.image_dir.pop(item_id)
         self.save()
 
-    def find(self, keyword_regex: str = '', Tags= None):
+    def find(self, keyword_regex: str = '', Tags=None):
         if Tags is None:
             tags = list()
         elif isinstance(Tags, str):

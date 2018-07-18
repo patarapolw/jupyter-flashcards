@@ -20,3 +20,18 @@ Show front side of the card on Jupyter Notebook. Images are also included (no ne
 Back side of the card is show. Also render images and HTML.
 
 ```
+For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/README.md
+
+## Screenshots
+
+<img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/1.png" />
+<img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/2.png" />
+<img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/3.png" />
+
+## Plans
+
+Probably exporting to `pyfladesk`/`Flask`, for non-python users, non-programmers to use.
+
+## Related
+
+- [TagDict](https://github.com/patarapolw/TagDict)
