@@ -36,7 +36,7 @@ It must be an Excel file with a worksheet named `flashcards` and has a first row
 
 ## Plans
 
-Probably exporting to `pyfladesk`/`Flask`, for non-python users, non-programmers to use.
+Probably exporting to `pyfladesk`/`Flask`/`pyinstaller`, for non-python users, non-programmers to use.
 
 ## Related
 
