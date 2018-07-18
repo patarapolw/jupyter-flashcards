@@ -34,7 +34,7 @@ Back side of the card is show. Also render images, markdown and HTML.
 ```
 In this case, the images are always cached at `foo/` folder for offline use.
 
-For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/README.md
+For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/
 
 ## Departure from the normal markdown
 
