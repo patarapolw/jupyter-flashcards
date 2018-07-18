@@ -231,7 +231,7 @@ class Flashcards:
         for item_id in matched_entries:
             if len(tags) == 0:
                 yield self.data[item_id]
-            elif all([tag in tag_reader(self.data[item_id].Tags) for tag in tags]):
+            elif compare_list_match_regex(tags, tag_reader(self.data[item_id].Tags)):
                 yield self.data[item_id]
 
     def preview(self, keyword_regex: str='', tags: list=None,
@@ -310,3 +310,27 @@ class Flashcards:
                 data[str(row[0])] = CardTuple(**dict(zip(headers, row)))
 
         return data
+
+    @property
+    def tags(self):
+        tags = set()
+
+        for v in self.data.values():
+            tags.update(tag_reader(v.Tags))
+
+        return tags
+
+
+def compare_list_match_regex(subset, superset):
+    def _sub_compare(sub_item):
+        for super_item in superset:
+            if re.search(sub_item, super_item, flags=re.IGNORECASE):
+                return True
+
+        return False
+
+    result = []
+    for sub_item in subset:
+        result.append(_sub_compare(sub_item))
+
+    return all(result)
