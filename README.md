@@ -32,7 +32,7 @@ For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/
 
 ## Departure from the normal markdown
 
-`\n+` is converted to `\n\n`, meaning it doesn't matter if you press enter once; it will rendered to a new line.
+`/\n+\/` is converted to `\n\n`, meaning it doesn't matter if you press enter once; it will rendered to a new line.
 
 ## Excel file
 
