@@ -12,7 +12,7 @@
 
 ### `Flashcards.add(**kwargs)`
 
-- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'Front', 'Back', 'Keywords', 'Tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Anything unique will be accepted.)
+- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'Front', 'Back', 'Keywords', 'Tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Any ID unique will be accepted.)
 - A CardQuiz object matching the updated item is returned.
 - The back of the CardQuiz can be shown using `.show()`.
 
