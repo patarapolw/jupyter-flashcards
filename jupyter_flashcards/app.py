@@ -142,10 +142,13 @@ class Flashcards:
         else:
             orig_tags = ''
 
-        kwargs['Keywords'] = to_raw_tags(tag_reader(orig_keywords)
-                                         .add(to_raw_tags(kwargs.get('Keywords', []))))
-        kwargs['Tags'] = to_raw_tags(tag_reader(orig_tags)
-                                     .add(to_raw_tags(kwargs.get('Tags', []))))
+        keywords = kwargs.get('Keywords', [])
+        keywords.extend(tag_reader(orig_keywords))
+        kwargs['Keywords'] = to_raw_tags(keywords)
+
+        tags = kwargs.get('Tags', [])
+        tags.extend(tag_reader(orig_tags))
+        kwargs['Tags'] = to_raw_tags(tags)
 
         orig_front = self.data[item_id].Front
         orig_back = self.data[item_id].Back
@@ -217,7 +220,11 @@ class Flashcards:
 
         matched_entries = set()
         for item_id, item in self.data.items():
-            for keyword in (item.Front, item.Back, item.Keywords):
+            keywords = tag_reader(item.Keywords)
+            keywords.add(item.Front)
+            keywords.add(item.Back)
+
+            for keyword in keywords:
                 if re.search(keyword_regex, keyword, flags=re.IGNORECASE):
                     matched_entries.add(item_id)
 
@@ -273,8 +280,14 @@ class Flashcards:
         finally:
             Timer(5, file_output.unlink).start()
 
-    def quiz(self, keyword_regex: str='', Tags: list=None):
-        all_records = list(self.find(keyword_regex, Tags))
+    def quiz(self, keyword_regex: str='', Tags: list=None, exclude: list =None):
+        if exclude is None:
+            exclude = list()
+        else:
+            exclude = [int(item_id) for item_id in exclude]
+
+        all_records = [record for record in self.find(keyword_regex, Tags) if record.id not in exclude]
+
         if len(all_records) == 0:
             return "There is no record matching the criteria."
 
@@ -293,6 +306,7 @@ class Flashcards:
             raise DatabaseHeaderException('Invalid Excel database.')
 
         for row in raw_data[self.SHEET_NAME][1:]:
-            data[row[0]] = CardTuple(**dict(zip(headers, row)))
+            if row[0]:
+                data[str(row[0])] = CardTuple(**dict(zip(headers, row)))
 
         return data

@@ -29,6 +29,7 @@ class CardQuiz:
 
         self.record = record
         self.image_dir = image_dir
+        self.id = record.id
 
     def _repr_html_(self):
         html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.Front))
@@ -45,20 +46,18 @@ class CardQuiz:
         return HTML(html)
 
     def _parse_markdown(self, text):
-        html = markdown(text)
-
-        for url in get_url_images_in_text(html):
+        for url in get_url_images_in_text(text):
             image_name = '{}-{}'.format(self.record.id, Path(url).name)
 
             if urlparse(url).netloc:
-                html = html.replace(url, '<img src="{}" />'
+                text = text.replace(url, '<img src="{}" />'
                                     .format(str(cache_image_from_url(image_name=image_name, image_url=url,
                                                                      image_dir=self.image_dir)
                                                 .relative_to('.'))))
             else:
-                html = html.replace(url, '<img src="{}" />'
+                text = text.replace(url, '<img src="{}" />'
                                     .format(str(cache_image_from_file(image_name=image_name, image_path=url,
                                                                       image_dir=self.image_dir)
                                                 .relative_to('.'))))
 
-        return html
+        return markdown(text)
