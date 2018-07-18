@@ -280,13 +280,17 @@ class Flashcards:
         finally:
             Timer(5, file_output.unlink).start()
 
-    def quiz(self, keyword_regex: str='', Tags: list=None, exclude: list =None):
+    def quiz(self, keyword_regex: str='', Tags: list=None, exclude: list =None, image_only=False):
         if exclude is None:
             exclude = list()
         else:
             exclude = [int(item_id) for item_id in exclude]
 
         all_records = [record for record in self.find(keyword_regex, Tags) if record.id not in exclude]
+
+        if image_only:
+            all_records = [record for record in all_records
+                           if len(get_url_images_in_text(record.Front)) > 0]
 
         if len(all_records) == 0:
             return "There is no record matching the criteria."
