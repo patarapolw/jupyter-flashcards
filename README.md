@@ -4,7 +4,7 @@ Jupyter notebook utility to view flashcards in both Excel and markdown format.
 
 Not to mention that both the `*.xlsx` file and the image folder are directly editable.
 
-The image folder is auto-cached everything you add image in the markdown (both online and local). The Excel file autosaves every time you edit it.
+The image folder auto-caches any images you add in the markdown (both online and local). The Excel file autosaves every time you edit it.
 
 ## Usage
 
