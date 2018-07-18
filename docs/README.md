@@ -26,7 +26,7 @@
 
 ### `Flashcards.remove(item_id)`
 
-- Remove the item matching the `item_id`
+- Remove the item and the cached image matching the `item_id`
 
 ### `Flashcards.find(keyword_regex: str = '', Tags: list=None)`
 
@@ -41,7 +41,7 @@
 ### `Flashcards.quiz(keyword_regex: str='', Tags: list=None)`
 
 - Randomize one flashcard to quiz on.
-- Return a `CardQuiz` object, which is directly `_repr_html_` as Front of the card.
+- Return a `CardQuiz` object, which is directly `_repr_html_` as the Front of the card.
 
 ## CardQuiz class
 
