@@ -21,7 +21,7 @@ A pyexcel-handsontable is shown. No HTML or markdown is rendered, though.
 >>> card
 Show front side of the card on Jupyter Notebook. Images are also included (no need to be inside markdown tags, or img tags.) Markdown is rendered to HTML.
 >>> card.show()
-Back side of the card is show. Also render images and HTML.
+Back side of the card is show. Also render images, markdown and HTML.
 
 ```
 In the case, the images are always cached at `foo/` folder for offline use.
@@ -29,6 +29,10 @@ In the case, the images are always cached at `foo/` folder for offline use.
 It seems that `pyexcel-handsontable` isn't working offline, but everything else should be OK offline.
 
 For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/README.md
+
+## Departure from the normal markdown
+
+`\n+` is converted to `\n\n`, meaning it doesn't matter if you press enter once; it will rendered to a new line.
 
 ## Excel file
 
