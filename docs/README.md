@@ -7,28 +7,28 @@
 
 ### `Flashcards.save(out_file)`
 
-- if `out_file` is not given, it will be the same as `in_file`.
+- If `out_file` is not given, it will be the same as `in_file`.
 - It can be either an `Excel` or a folder.
 
 ### `Flashcards.add(**kwargs)`
 
-- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'front', 'back', 'keywords', 'tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Any ID unique will be accepted.)
-- A CardQuiz object matching the updated item is returned.
-- The back of the CardQuiz can be shown using `.show()`.
+- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'front', 'back', 'keywords', 'tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Any ID unique will be accepted. Have to digits, or string of digits.)
+- Front side and back side is shown on the Jupyter cell.
+- Nothing is returned.
 
 ### `Flashcards.append(item_id, **kwargs)`
 
 - item_id must match the ones in the database.
 - If any of the keywords is supplied - ['id', 'front', 'back', 'keywords', 'tags'], it will update the one in the database.
-- A CardQuiz object matching the updated item is returned.
-- The back of the CardQuiz can be shown using `.show()`.
+- Front side and back side is shown on the Jupyter cell.
+- Nothing is returned.
 
 ### `Flashcards.update(item_id, **kwargs)`
 
 - item_id must match the ones in the database.
 - If any of the keywords is supplied - ['id', 'front', 'back', 'keywords', 'tags'], it will overwrite the one in the database.
-- A CardQuiz object matching the updated item is returned.
-- The back of the CardQuiz can be shown using `.show()`.
+- Front side and back side is shown on the Jupyter cell.
+- Nothing is returned.
 
 ### `Flashcards.remove(item_id)`
 
@@ -46,8 +46,8 @@
 
 ### `Flashcards.view_id(item_id)`
 
-- A CardQuiz object, exactly match the matched ID is returned (can be int or str representing the int).
-- The back of the CardQuiz can be shown using `.show()`.
+- Front side and back side is shown on the Jupyter cell.
+- Nothing is returned.
 
 ### `Flashcards.quiz(keyword_regex: str='', tags: list=None)`
 

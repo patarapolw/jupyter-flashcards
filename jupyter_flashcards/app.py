@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import re
 import random
 from threading import Timer
-from IPython.display import IFrame
+from IPython.display import IFrame, display
 
 import pyexcel
 import pyexcel_export
@@ -174,7 +174,10 @@ class Flashcards:
 
         self.save()
 
-        return CardQuiz(self.data[item_id], image_dir=self.image_dir)
+        card = CardQuiz(self.data[item_id], image_dir=self.image_dir)
+
+        display(card)
+        display(card.show())
 
     def update(self, item_id: int, **kwargs):
         item_id = str(item_id)
@@ -194,7 +197,10 @@ class Flashcards:
 
         self.save()
 
-        return CardQuiz(self.data[item_id], image_dir=self.image_dir)
+        card = CardQuiz(self.data[item_id], image_dir=self.image_dir)
+
+        display(card)
+        display(card.show())
 
     def _cache_image(self, item_id, text):
         for url in get_url_images_in_text(text):
@@ -215,6 +221,8 @@ class Flashcards:
 
         self.save()
 
+        return "{} removed.".format(item_id)
+
     def image_cleanup(self, item_id):
         record = self.data[str(item_id)]
 
@@ -224,8 +232,14 @@ class Flashcards:
             if image_name in self.image_dir.keys():
                 self.image_dir.pop(image_name)
 
+                print('Image {} deleted from cache'.format(image_name))
+
             if self.image_dir['_path'].joinpath(image_name).exists():
                 self.image_dir['_path'].joinpath(image_name).unlink()
+
+                print('Image {} deleted from image folder'.format(image_name))
+
+        return 'Succeeded.'
 
     def find(self, keyword_regex: str = '', tags=None):
         if tags is None:
@@ -315,7 +329,10 @@ class Flashcards:
         return tags
 
     def view_id(self, item_id):
-        return CardQuiz(self.data[str(item_id)], image_dir=self.image_dir)
+        card = CardQuiz(self.data[str(item_id)], image_dir=self.image_dir)
+
+        display(card)
+        display(card.show())
 
 
 def compare_list_match_regex(subset, superset):
