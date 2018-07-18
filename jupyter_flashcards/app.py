@@ -120,7 +120,7 @@ class Flashcards:
         item_id = int(time() * 1000)
         self.data[str(item_id)] = CardTuple(id=item_id)
 
-        return 'id: {}'.format(item_id), self.append(item_id, **kwargs)
+        return item_id, self.append(item_id, **kwargs)
 
     def append(self, item_id, **kwargs):
         """
