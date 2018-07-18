@@ -11,10 +11,10 @@ from .tags import tag_reader
 
 CardTuple = nl.namedlist('CardTuple', [
     'id',
-    ('Front', ''),
-    ('Back', ''),
-    ('Keywords', ''),
-    ('Tags', '')
+    ('front', ''),
+    ('back', ''),
+    ('keywords', ''),
+    ('tags', '')
 ])
 
 
@@ -32,16 +32,16 @@ class CardQuiz:
         self.id = record.id
 
     def _repr_html_(self):
-        html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.Front))
-        # html += "<br />" + markdown(self.record.Keywords)
-        # html += "<br />" + markdown(self.record.Tags)
+        html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.front))
+        # html += "<br />" + markdown(self.record.keywords)
+        # html += "<br />" + markdown(self.record.tags)
 
         return html
 
     def show(self):
-        html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.Back))
-        html += markdown("**Keywords:** " + ', '.join(tag_reader(self.record.Keywords)))
-        html += markdown("**Tags:** " + ', '.join(tag_reader(self.record.Tags)))
+        html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.back))
+        html += markdown("**Keywords:** " + ', '.join(tag_reader(self.record.keywords)))
+        html += markdown("**Tags:** " + ', '.join(tag_reader(self.record.tags)))
 
         return HTML(html)
 

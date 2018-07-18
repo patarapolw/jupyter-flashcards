@@ -20,16 +20,16 @@ The image folder auto-caches any images you add in the markdown (both online and
 >>> from jupyter_flashcards import Flashcards
 >>> fc = Flashcards('user/foo/')  # This is a folder name, although *.xlsx is also supported.
 >>> fc.add(
-    Front="http://www.pathologyoutlines.com/images/eye/PL04C.jpg",
-    Back="retinoblastoma",
-    Tags=["eye"]
+    front="http://www.pathologyoutlines.com/images/eye/PL04C.jpg",
+    back="retinoblastoma",
+    tags=["eye"]
 )
 A pyexcel-handsontable is shown. No HTML or markdown is rendered, though.
 >>> card = fc.quiz('retino')  # A random card is choosed from the regex "retino"
 >>> card
 Show front side of the card on Jupyter Notebook. Images are also included (no need to be inside markdown tags, or img tags.) Markdown is rendered to HTML.
 >>> card.show()
-Back side of the card is show. Also render images, markdown and HTML.
+back side of the card is show. Also render images, markdown and HTML.
 
 ```
 In this case, the images are always cached at `foo/` folder for offline use.
@@ -42,13 +42,14 @@ For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/
 
 ## Excel file
 
-It must be an Excel file with a worksheet named `flashcards` and has a first row of ['id', 'Front', 'Back', 'Keywords', 'Tags']. After the first row, every row must have an id specified. Id must be a number.
+It must be an Excel file with a worksheet named `flashcards` and has a first row of ['id', 'front', 'back', 'keywords', 'tags']. After the first row, every row must have an id specified. Id must be a number.
 
 ## Screenshots
 
 <img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/1.png" />
 <img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/2.png" />
 <img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/3.png" />
+<img src="https://raw.githubusercontent.com/patarapolw/jupyter-flashcards/master/screenshots/4.png" />
 
 ## Plans
 

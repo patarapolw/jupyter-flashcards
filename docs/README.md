@@ -12,21 +12,21 @@
 
 ### `Flashcards.add(**kwargs)`
 
-- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'Front', 'Back', 'Keywords', 'Tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Any ID unique will be accepted.)
+- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'front', 'back', 'keywords', 'tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Any ID unique will be accepted.)
 - A CardQuiz object matching the updated item is returned.
 - The back of the CardQuiz can be shown using `.show()`.
 
 ### `Flashcards.append(item_id, **kwargs)`
 
 - item_id must match the ones in the database.
-- If any of the keywords is supplied - ['id', 'Front', 'Back', 'Keywords', 'Tags'], it will update the one in the database.
+- If any of the keywords is supplied - ['id', 'front', 'back', 'keywords', 'tags'], it will update the one in the database.
 - A CardQuiz object matching the updated item is returned.
 - The back of the CardQuiz can be shown using `.show()`.
 
 ### `Flashcards.update(item_id, **kwargs)`
 
 - item_id must match the ones in the database.
-- If any of the keywords is supplied - ['id', 'Front', 'Back', 'Keywords', 'Tags'], it will overwrite the one in the database.
+- If any of the keywords is supplied - ['id', 'front', 'back', 'keywords', 'tags'], it will overwrite the one in the database.
 - A CardQuiz object matching the updated item is returned.
 - The back of the CardQuiz can be shown using `.show()`.
 
@@ -34,11 +34,11 @@
 
 - Remove the item and the cached image matching the `item_id`
 
-### `Flashcards.find(keyword_regex: str = '', Tags: list=None)`
+### `Flashcards.find(keyword_regex: str = '', tags: list=None)`
 
 - Return a generator containing CardTuple's.
 - If nothing is supplied, it will return the whole collection.
-- keyword_regex is a regex matching `Front`, `Back` and `Keywords`.
+- keyword_regex is a regex matching `front`, `back` and `keywords`.
 
 ### `Flashcards.preview(keyword_regex: str='', tags: list=None, file_format='handsontable', width=800, height=300)`
 
@@ -49,10 +49,10 @@
 - A CardQuiz object, exactly match the matched ID is returned (can be int or str representing the int).
 - The back of the CardQuiz can be shown using `.show()`.
 
-### `Flashcards.quiz(keyword_regex: str='', Tags: list=None)`
+### `Flashcards.quiz(keyword_regex: str='', tags: list=None)`
 
 - Randomize one flashcard to quiz on.
-- Return a `CardQuiz` object, which is directly `_repr_html_` as the Front of the card.
+- Return a `CardQuiz` object, which is directly `_repr_html_` as the front of the card.
 
 ### `Flashcards.tag`
 
@@ -63,4 +63,4 @@
 
 The only you would probably use is `CardQuiz.show()`.
 
-- Show the Back of the card.
+- Show the back of the card.

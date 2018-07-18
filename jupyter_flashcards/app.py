@@ -101,7 +101,8 @@ class Flashcards:
             raise NoDataError("There is no data to save.")
 
         out_matrix = []
-        header = list(self.data.values())[0]._fields
+        header = [header_item.title() for header_item in list(self.data.values())[0]._fields
+                  if header_item != 'id']
         out_matrix.append(header)
 
         for card_id, card_tuple in self.data.items():
@@ -113,11 +114,11 @@ class Flashcards:
         pyexcel_export.save_data(out_file=out_file, data=out_data, meta=self.meta)
 
     def add(self, **kwargs):
-        if 'Front' not in kwargs.keys():
-            raise BadArgumentsException("'Front' not in kwargs.keys()")
+        if 'front' not in kwargs.keys():
+            raise BadArgumentsException("'front' not in kwargs.keys()")
 
-        item_id = str(int(time() * 1000))
-        self.data[item_id] = CardTuple(id=item_id)
+        item_id = int(time() * 1000)
+        self.data[str(item_id)] = CardTuple(id=item_id)
 
         return self.append(item_id, **kwargs)
 
@@ -133,39 +134,39 @@ class Flashcards:
         if item_id not in self.data.keys():
             raise KeyError("Cannot append to {}.".format(item_id))
 
-        if self.data[item_id].Keywords:
-            orig_keywords = self.data[item_id].Keywords
+        if self.data[item_id].keywords:
+            orig_keywords = self.data[item_id].keywords
         else:
             orig_keywords = ''
 
-        if self.data[item_id].Tags:
-            orig_tags = self.data[item_id].Tags
+        if self.data[item_id].tags:
+            orig_tags = self.data[item_id].tags
         else:
             orig_tags = ''
 
-        keywords = kwargs.get('Keywords', [])
+        keywords = kwargs.get('keywords', [])
         keywords.extend(tag_reader(orig_keywords))
-        kwargs['Keywords'] = to_raw_tags(keywords)
+        kwargs['keywords'] = to_raw_tags(keywords)
 
-        tags = kwargs.get('Tags', [])
+        tags = kwargs.get('tags', [])
         tags.extend(tag_reader(orig_tags))
-        kwargs['Tags'] = to_raw_tags(tags)
+        kwargs['tags'] = to_raw_tags(tags)
 
-        orig_front = self.data[item_id].Front
-        orig_back = self.data[item_id].Back
+        orig_front = self.data[item_id].front
+        orig_back = self.data[item_id].back
 
         if orig_front and orig_front[-1] != '\n':
-            kwargs['Front'] = orig_front + '\n' + kwargs.get('Front', '')
+            kwargs['front'] = orig_front + '\n' + kwargs.get('front', '')
         else:
-            kwargs['Front'] = orig_front + kwargs.get('Front', '')
+            kwargs['front'] = orig_front + kwargs.get('front', '')
 
         if orig_back and orig_back[-1] != '\n':
-            kwargs['Back'] = orig_back + '\n' + kwargs.get('Back', '')
+            kwargs['back'] = orig_back + '\n' + kwargs.get('back', '')
         else:
-            kwargs['Back'] = orig_back + kwargs.get('Back', '')
+            kwargs['back'] = orig_back + kwargs.get('back', '')
 
-        self._cache_image(item_id, kwargs['Front'])
-        self._cache_image(item_id, kwargs['Back'])
+        self._cache_image(item_id, kwargs['front'])
+        self._cache_image(item_id, kwargs['back'])
 
         self.data[item_id]._update(kwargs)
 
@@ -173,19 +174,19 @@ class Flashcards:
 
         return CardQuiz(self.data[item_id], image_dir=self.image_dir)
 
-    def update(self, item_id, **kwargs):
+    def update(self, item_id: int, **kwargs):
         item_id = str(item_id)
 
         if item_id not in self.data.keys():
             raise KeyError("Cannot reset to {}.".format(item_id))
 
-        if 'Keywords' in kwargs.keys():
-            kwargs['Keywords'] = to_raw_tags(kwargs['Keywords'])
-        if 'Tags' in kwargs.keys():
-            kwargs['Tags'] = to_raw_tags(kwargs['Tags'])
+        if 'keywords' in kwargs.keys():
+            kwargs['keywords'] = to_raw_tags(kwargs['keywords'])
+        if 'tags' in kwargs.keys():
+            kwargs['tags'] = to_raw_tags(kwargs['tags'])
 
-        self._cache_image(item_id, kwargs.get('Front', ''))
-        self._cache_image(item_id, kwargs.get('Back', ''))
+        self._cache_image(item_id, kwargs.get('front', ''))
+        self._cache_image(item_id, kwargs.get('back', ''))
 
         self.data[item_id]._update(kwargs)
 
@@ -211,19 +212,19 @@ class Flashcards:
         self.image_dir.pop(item_id)
         self.save()
 
-    def find(self, keyword_regex: str = '', Tags=None):
-        if Tags is None:
+    def find(self, keyword_regex: str = '', tags=None):
+        if tags is None:
             tags = list()
-        elif isinstance(Tags, str):
-            tags = [Tags]
+        elif isinstance(tags, str):
+            tags = [tags]
         else:
-            tags = Tags
+            tags = tags
 
         matched_entries = set()
         for item_id, item in self.data.items():
-            keywords = tag_reader(item.Keywords)
-            keywords.add(item.Front)
-            keywords.add(item.Back)
+            keywords = tag_reader(item.keywords)
+            keywords.add(item.front)
+            keywords.add(item.back)
 
             for keyword in keywords:
                 if re.search(keyword_regex, keyword, flags=re.IGNORECASE):
@@ -232,7 +233,7 @@ class Flashcards:
         for item_id in matched_entries:
             if len(tags) == 0:
                 yield self.data[item_id]
-            elif compare_list_match_regex(tags, tag_reader(self.data[item_id].Tags)):
+            elif compare_list_match_regex(tags, tag_reader(self.data[item_id].tags)):
                 yield self.data[item_id]
 
     def preview(self, keyword_regex: str='', tags: list=None,
@@ -254,17 +255,17 @@ class Flashcards:
         finally:
             Timer(5, file_output.unlink).start()
 
-    def quiz(self, keyword_regex: str='', Tags: list=None, exclude: list =None, image_only=False):
+    def quiz(self, keyword_regex: str='', tags: list=None, exclude: list =None, image_only=False):
         if exclude is None:
             exclude = list()
         else:
-            exclude = [str(item_id) for item_id in exclude]
+            exclude = [int(item_id) for item_id in exclude]
 
-        all_records = [record for record in self.find(keyword_regex, Tags) if record.id not in exclude]
+        all_records = [record for record in self.find(keyword_regex, tags) if record.id not in exclude]
 
         if image_only:
             all_records = [record for record in all_records
-                           if len(get_url_images_in_text(record.Front)) > 0]
+                           if len(get_url_images_in_text(record.front)) > 0]
 
         if len(all_records) == 0:
             return "There is no record matching the criteria."
@@ -279,7 +280,7 @@ class Flashcards:
 
         data = OrderedDict()
 
-        headers = raw_data[self.SHEET_NAME][0]
+        headers = [header_item.lower() for header_item in raw_data[self.SHEET_NAME][0]]
         if headers[0] != 'id':
             raise DatabaseHeaderException('Invalid Excel database.')
 
@@ -294,7 +295,7 @@ class Flashcards:
         tags = set()
 
         for v in self.data.values():
-            tags.update(tag_reader(v.Tags))
+            tags.update(tag_reader(v.tags))
 
         return tags
 
