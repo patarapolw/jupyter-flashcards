@@ -1,6 +1,6 @@
 # Jupyter-flashcards
 
-Jupyter notebook utility to view flashcards in both Excel and markdown format.
+A Jupyter notebook utility to view flashcards in both Excel and markdown format.
 
 Not to mention that both the `*.xlsx` file and the image folder are directly editable.
 
