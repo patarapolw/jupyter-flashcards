@@ -101,8 +101,8 @@ class Flashcards:
             raise NoDataError("There is no data to save.")
 
         out_matrix = []
-        header = [header_item.title() for header_item in list(self.data.values())[0]._fields
-                  if header_item != 'id']
+        header = [header_item.title() if header_item != 'id' else header_item
+                  for header_item in list(self.data.values())[0]._fields]
         out_matrix.append(header)
 
         for card_id, card_tuple in self.data.items():
