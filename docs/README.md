@@ -54,6 +54,10 @@
 - Randomize one flashcard to quiz on.
 - Return a `CardQuiz` object, which is directly `_repr_html_` as the front of the card.
 
+### `Flashcards.cleanup()`
+
+- Deletion of all images not used in any sides of the card. (Delete from image folder.)
+
 ### `Flashcards.tag`
 
 - A property, returning all the possible tags.

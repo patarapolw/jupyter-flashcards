@@ -206,11 +206,24 @@ class Flashcards:
         item_id = str(item_id)
 
         if item_id not in self.data.keys():
-            raise KeyError("Cannot append to {}.".format(item_id))
+            raise KeyError("Cannot remove from {}.".format(item_id))
 
         self.data.pop(item_id)
-        self.image_dir.pop(item_id)
+        self.image_cleanup(item_id)
+
         self.save()
+
+    def image_cleanup(self, item_id):
+        record = self.data[str(item_id)]
+
+        for url in get_url_images_in_text(record.front + '\n' + record.back):
+            image_name = '{}-{}'.format(record.id, Path(url).name)
+
+            if image_name in self.image_dir.keys():
+                self.image_dir.pop(image_name)
+
+            if self.image_dir['_path'].joinpath(image_name).exists():
+                self.image_dir['_path'].joinpath(image_name).unlink()
 
     def find(self, keyword_regex: str = '', tags=None):
         if tags is None:
