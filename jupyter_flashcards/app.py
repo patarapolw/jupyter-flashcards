@@ -16,6 +16,7 @@ from .cache import cache_image_from_file, cache_image_from_url
 from .card import CardQuiz, CardTuple
 from .exceptions import (FileExtensionException, DatabaseHeaderException, NoDataError,
                          BadArgumentsException)
+from .dir import module_path
 
 
 class Flashcards:
@@ -115,8 +116,8 @@ class Flashcards:
         if 'Front' not in kwargs.keys():
             raise BadArgumentsException("'Front' not in kwargs.keys()")
 
-        item_id = int(time() * 1000)
-        self.data[str(item_id)] = CardTuple(id=item_id)
+        item_id = str(int(time() * 1000))
+        self.data[item_id] = CardTuple(id=item_id)
 
         return self.append(item_id, **kwargs)
 
@@ -170,9 +171,9 @@ class Flashcards:
 
         self.save()
 
-        return self._preview_entries(self.data[item_id])
+        return CardQuiz(self.data[item_id], image_dir=self.image_dir)
 
-    def update(self, item_id: int, **kwargs):
+    def update(self, item_id, **kwargs):
         item_id = str(item_id)
 
         if item_id not in self.data.keys():
@@ -190,7 +191,7 @@ class Flashcards:
 
         self.save()
 
-        return self._preview_entries(self.data[item_id])
+        return CardQuiz(self.data[item_id], image_dir=self.image_dir)
 
     def _cache_image(self, item_id, text):
         for url in get_url_images_in_text(text):
@@ -243,37 +244,10 @@ class Flashcards:
             pyexcel.save_as(
                 records=[item._asdict() for item in self.find(keyword_regex, tags)],
                 dest_file_name=str(file_output.absolute()),
-                dest_sheet_name='Preview'
-            )
-
-            return IFrame(str(file_output.relative_to('.')), width=width, height=height)
-        finally:
-            Timer(5, file_output.unlink).start()
-
-    def _preview_entries(self, entries,
-                         file_format='handsontable', width=800, height=150):
-        """
-
-        :param dict|OrderedDict|iter entries:
-        :param file_format:
-        :param width:
-        :param height:
-        :return:
-        """
-        if isinstance(entries, CardTuple):
-            entries = [list(entries)]
-
-        assert all([isinstance(entry, list) for entry in entries])
-        assert all([isinstance(entry, list) for entry in entries])
-
-        file_output = self.working_dir.joinpath('preview.{}.html'.format(file_format))
-
-        try:
-            pyexcel.save_as(
-                array=list(entries),
-                dest_file_name=str(file_output.absolute()),
-                dest_mapdict=CardTuple._fields,
-                dest_sheet_name='Preview'
+                dest_sheet_name='Preview',
+                # readOnly=False,
+                js_url=module_path('handsontable.full.min.js'),
+                css_url=module_path('handsontable.full.min.css')
             )
 
             return IFrame(str(file_output.relative_to('.')), width=width, height=height)
@@ -284,7 +258,7 @@ class Flashcards:
         if exclude is None:
             exclude = list()
         else:
-            exclude = [int(item_id) for item_id in exclude]
+            exclude = [str(item_id) for item_id in exclude]
 
         all_records = [record for record in self.find(keyword_regex, Tags) if record.id not in exclude]
 
@@ -323,6 +297,9 @@ class Flashcards:
             tags.update(tag_reader(v.Tags))
 
         return tags
+
+    def view_id(self, item_id):
+        return CardQuiz(self.data[str(item_id)], image_dir=self.image_dir)
 
 
 def compare_list_match_regex(subset, superset):

@@ -1,7 +1,5 @@
-from zipfile import ZipFile
-from pathlib import Path
-from markdown import markdown
+from jupyter_flashcards.dir import module_path
 
 
 if __name__ == '__main__':
-    print(markdown('//'))
+    print(module_path('tryout.py'))

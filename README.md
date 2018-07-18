@@ -1,10 +1,18 @@
 # Jupyter-flashcards
 
-A Jupyter notebook utility to view flashcards in both Excel and markdown format.
+A Jupyter notebook utility to view flashcards in both Excel and markdown format. The image is also shown.
 
 Not to mention that both the `*.xlsx` file and the image folder are directly editable.
 
 The image folder auto-caches any images you add in the markdown (both online and local). The Excel file autosaves every time you edit it.
+
+## Installation
+
+- [Clone the project]().
+- Create a virtual environment.
+- [Install poetry](https://github.com/sdispater/poetry#installation)
+- Run `poetry install`.
+- Import this project in Jupyter notebook `from jupyter_flashcards import Flashcards`.
 
 ## Usage
 
@@ -25,8 +33,6 @@ Back side of the card is show. Also render images, markdown and HTML.
 
 ```
 In this case, the images are always cached at `foo/` folder for offline use.
-
-It seems that `pyexcel-handsontable` isn't working offline, but everything else should be OK offline.
 
 For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/README.md
 
