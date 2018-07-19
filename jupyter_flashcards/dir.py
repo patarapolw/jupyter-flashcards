@@ -7,3 +7,7 @@ TRUE_ROOT = MODULE_ROOT.parent
 
 def module_path(filename):
     return str(MODULE_ROOT.joinpath(filename).relative_to(TRUE_ROOT))
+
+
+def static_path(filename):
+    return str(MODULE_ROOT.joinpath('static').joinpath(filename).relative_to(TRUE_ROOT))

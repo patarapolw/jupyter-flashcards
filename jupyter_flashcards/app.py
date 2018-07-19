@@ -14,9 +14,9 @@ from .tags import to_raw_tags, tag_reader
 from .utils import get_url_images_in_text
 from .cache import cache_image_from_file, cache_image_from_url
 from .card import CardQuiz, CardTuple
+from .preview import save_preview_table
 from .exceptions import (FileExtensionException, DatabaseHeaderException, NoDataError,
                          BadArgumentsException)
-from .dir import module_path
 
 
 class Flashcards:
@@ -113,16 +113,25 @@ class Flashcards:
 
         pyexcel_export.save_data(out_file=out_file, data=out_data, meta=self.meta)
 
-    def add(self, **kwargs):
-        if 'front' not in kwargs.keys():
-            raise BadArgumentsException("'front' not in kwargs.keys()")
+    def add(self, append_to=None, **kwargs):
+        """
 
-        item_id = int(time() * 1000)
-        self.data[str(item_id)] = CardTuple(id=item_id)
+        :param append_to: if append to_is specified, the method self.append is used, with item_id = append_to
+        :param kwargs:
+        :return:
+        """
+        if append_to is None:
+            if 'front' not in kwargs.keys():
+                raise BadArgumentsException("'front' not in kwargs.keys()")
 
-        print("Card id: {}".format(item_id))
+            item_id = int(time() * 1000)
+            self.data[str(item_id)] = CardTuple(id=item_id)
 
-        return self.append(item_id, **kwargs)
+            print("Card id: {}".format(item_id))
+
+            return self.append(item_id, **kwargs)
+        else:
+            return self.append(append_to, **kwargs)
 
     def append(self, item_id, **kwargs):
         """
@@ -179,6 +188,8 @@ class Flashcards:
         display(card)
         display(card.show())
 
+        # return card
+
     def update(self, item_id: int, **kwargs):
         item_id = str(item_id)
 
@@ -201,6 +212,8 @@ class Flashcards:
 
         display(card)
         display(card.show())
+
+        # return card
 
     def _cache_image(self, item_id, text):
         for url in get_url_images_in_text(text):
@@ -271,16 +284,12 @@ class Flashcards:
         file_output = self.working_dir.joinpath('preview.{}.html'.format(file_format))
 
         try:
-            pyexcel.save_as(
-                records=[item._asdict() for item in self.find(keyword_regex, tags)],
-                dest_file_name=str(file_output.absolute()),
-                dest_sheet_name='Preview',
-                # readOnly=False,
-                js_url=module_path('handsontable.full.min.js'),
-                css_url=module_path('handsontable.full.min.css')
-            )
-
-            return IFrame(str(file_output.relative_to('.')), width=width, height=height)
+            return save_preview_table(array=[CardTuple._fields] +
+                                            [list(item) for item in self.find(keyword_regex, tags)],
+                                      dest_file_name=str(file_output.relative_to('.')),
+                                      image_dir=self.image_dir,
+                                      markdown_cols=[1, 2],
+                                      width=width, height=height)
         finally:
             Timer(5, file_output.unlink).start()
 
@@ -333,6 +342,8 @@ class Flashcards:
 
         display(card)
         display(card.show())
+
+        # return card
 
 
 def compare_list_match_regex(subset, superset):
