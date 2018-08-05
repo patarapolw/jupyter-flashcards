@@ -1,13 +1,12 @@
 [tool.poetry]
 name = "jupyter-flashcards"
-version = "0.1.2"
+version = "0.2"
 description = "Jupyter notebook utility to view flashcards in both Excel and markdown format."
 authors = ["Pacharapol Withayasakpunt <patarapolw@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/patarapolw/jupyter-flashcards"
 homepage = "https://github.com/patarapolw/jupyter-flashcards"
-include = ["jupyter_flashcards/*.js", "jupyter_flashcards/*.css"]
 
 keywords = ["jupyter", "flashcards"]
 
@@ -16,11 +15,16 @@ python = ">=3"
 jupyter = "^1.0"
 notebook = "^5.6"
 requests = "^2.19"
-markdown = "^2.6"
 pyexcel = "^0.5.8"
+#pyexcel-xlsx = "^0.5.6"
 pyexcel-export = "^0.3.0"
-pyexcel-handsontable = "^0.0.1"
+markdown = "^2.6"
 namedlist = "^1.7"
+pyhandsontable = "^0.2.7"
+bs4 = "^0.0.1"
+python-dateutil = "^2.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6"
+#simplecel = "^0.2.3"
+simplecel = {path = "../simplecel"}

@@ -1,0 +1,14 @@
+p {
+  margin: 0em;
+}
+ul {
+  margin-top: -1em;
+  margin-bottom: -1em;
+}
+li {
+  margin: -0.5em;
+}
+::-webkit-scrollbar {
+  width: 0px;  /* remove scrollbar space */
+  background: transparent;  /* optional: just make scrollbar invisible */
+}

@@ -10,37 +10,13 @@
 - If `out_file` is not given, it will be the same as `in_file`.
 - It can be either an `Excel` or a folder.
 
-### `Flashcards.add(**kwargs)`
-
-- The kwargs that needs to be supplied is defined in CardTuple - ['id', 'front', 'back', 'keywords', 'tags'], although you can't choose your own ID. (You can edit it in an Excel, though. Any ID unique will be accepted. Have to digits, or string of digits.)
-- Front side and back side is shown on the Jupyter cell.
-- Nothing is returned.
-
-### `Flashcards.append(item_id, **kwargs)`
-
-- item_id must match the ones in the database.
-- If any of the keywords is supplied - ['id', 'front', 'back', 'keywords', 'tags'], it will update the one in the database.
-- Front side and back side is shown on the Jupyter cell.
-- Nothing is returned.
-
-### `Flashcards.update(item_id, **kwargs)`
-
-- item_id must match the ones in the database.
-- If any of the keywords is supplied - ['id', 'front', 'back', 'keywords', 'tags'], it will overwrite the one in the database.
-- Front side and back side is shown on the Jupyter cell.
-- Nothing is returned.
-
-### `Flashcards.remove(item_id)`
-
-- Remove the item and the cached image matching the `item_id`
-
 ### `Flashcards.find(keyword_regex: str = '', tags: list=None)`
 
 - Return a generator containing CardTuple's.
 - If nothing is supplied, it will return the whole collection.
 - keyword_regex is a regex matching `front`, `back` and `keywords`.
 
-### `Flashcards.preview(keyword_regex: str='', tags: list=None, file_format='handsontable', width=800, height=300)`
+### `Flashcards.view(keyword_regex: str='', tags: list=None, file_format='handsontable', width=800, height=300)`
 
 - Same as `Flashcards.find`, but return a `pyexcel-handsontable` viewable on Jupyter Notebook.
 
@@ -53,10 +29,6 @@
 
 - Randomize one flashcard to quiz on.
 - Return a `CardQuiz` object, which is directly `_repr_html_` as the front of the card.
-
-### `Flashcards.cleanup()`
-
-- Deletion of all images not used in any sides of the card. (Delete from image folder.)
 
 ### `Flashcards.tag`
 

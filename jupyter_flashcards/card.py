@@ -1,63 +1,62 @@
 from markdown import markdown
-from urllib.parse import urlparse
 from IPython.display import HTML
-import re
-import namedlist as nl
-from pathlib import Path
+from typing import NamedTuple
+import dateutil
+from datetime import datetime
 
-from .utils import get_url_images_in_text
-from .cache import cache_image_from_url, cache_image_from_file
+from .utils import parse_markdown
 from .tags import tag_reader
-
-CardTuple = nl.namedlist('CardTuple', [
-    'id',
-    ('front', ''),
-    ('back', ''),
-    ('keywords', ''),
-    ('tags', '')
-])
 
 
 class CardQuiz:
-    def __init__(self, record, image_dir):
+    def __init__(self, card_id, record):
         """
 
+        :param int card_id:
         :param dict|OrderedDict record:
-        :param dict image_dir:
         """
         assert isinstance(record, CardTuple)
 
         self.record = record
-        self.image_dir = image_dir
-        self.id = record.id
+        self.id = card_id
 
     def _repr_html_(self):
-        html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.front))
-        # html += "<br />" + markdown(self.record.keywords)
-        # html += "<br />" + markdown(self.record.tags)
+        html = parse_markdown(self.record.front)
 
         return html
 
     def show(self):
-        html = self._parse_markdown(re.sub(r'\n+', '\n\n', self.record.back))
+        html = parse_markdown(self.record.back)
         html += markdown("**Keywords:** " + ', '.join(tag_reader(self.record.keywords)))
         html += markdown("**Tags:** " + ', '.join(tag_reader(self.record.tags)))
 
         return HTML(html)
 
-    def _parse_markdown(self, text):
-        for url in get_url_images_in_text(text):
-            image_name = '{}-{}'.format(self.record.id, Path(url).name)
 
-            if urlparse(url).netloc:
-                text = text.replace(url, '<img src="{}" />'
-                                    .format(str(cache_image_from_url(image_name=image_name, image_url=url,
-                                                                     image_dir=self.image_dir)
-                                                .relative_to('.'))))
-            else:
-                text = text.replace(url, '<img src="{}" />'
-                                    .format(str(cache_image_from_file(image_name=image_name, image_path=url,
-                                                                      image_dir=self.image_dir)
-                                                .relative_to('.'))))
+class CardTuple(NamedTuple):
+    front: str = ''
+    back: str = ''
+    keywords: str = ''
+    tags: str = ''
+    srs_level: str = ''
+    next_review: str = ''
 
-        return markdown(text)
+    def to_formatted_tuple(self):
+        return (self.front, self.back, self.keywords, self.tags,
+                self.srs_level, self.next_review)
+
+    @property
+    def real_next_review(self):
+        if self.next_review:
+            return dateutil.parser.parse(self.next_review)
+        else:
+            return datetime.now()
+
+    @real_next_review.setter
+    def real_next_review(self, value):
+        """
+
+        :param datetime value:
+        :return:
+        """
+        self.next_review = value.isoformat()

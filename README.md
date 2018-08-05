@@ -18,13 +18,7 @@ The image folder auto-caches any images you add in the markdown (both online and
 
 ```python
 >>> from jupyter_flashcards import Flashcards
->>> fc = Flashcards('user/foo/')  # This is a folder name, although *.xlsx is also supported.
->>> fc.add(
-    front="http://www.pathologyoutlines.com/images/eye/PL04C.jpg",
-    back="retinoblastoma",
-    tags=["eye"]
-)
-The item id, the front and back of the card is shown.
+>>> fc = Flashcards('user/foo.xlsx')
 >>> card = fc.quiz('retino')  # A random card is choosed from the regex "retino"
 >>> card
 Show front side of the card on Jupyter Notebook. Images are also included (no need to be inside markdown tags, or img tags.) Markdown is rendered to HTML.
@@ -42,7 +36,7 @@ For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/
 
 ## Excel file
 
-It must be an Excel file with a worksheet named `flashcards` and has a first row of ['id', 'front', 'back', 'keywords', 'tags']. After the first row, every row must have an id specified. Id must be a number.
+It must be an Excel file with a worksheet named `flashcards` and has a first row of ['front', 'back', 'keywords', 'tags'].
 
 ## Screenshots
 
@@ -57,4 +51,5 @@ Probably exporting to `pyfladesk`/`Flask`/`pyinstaller`, for non-python users, n
 
 ## Related
 
-- [TagDict](https://github.com/patarapolw/TagDict)
+- [gflashcards](https://github.com/patarapolw/gflashcards) -- An online, Google Sheets version of `jupyter-flashcards`.
+- [simplecel](https://github.com/patarapolw/simplecel) -- Offline Excel-like app to view images and has no formula conversion.

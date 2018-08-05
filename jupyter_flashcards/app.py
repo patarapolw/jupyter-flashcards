@@ -1,56 +1,44 @@
 from pathlib import Path
 from collections import OrderedDict
 from time import time
-from urllib.parse import urlparse
 import re
 import random
 from threading import Timer
-from IPython.display import IFrame, display
+from IPython.display import display
+from bs4 import BeautifulSoup
 
-import pyexcel
 import pyexcel_export
+from pyhandsontable import view_table
 
-from .tags import to_raw_tags, tag_reader
-from .utils import get_url_images_in_text
-from .cache import cache_image_from_file, cache_image_from_url
+from .tags import tag_reader
+from .utils import get_url_images_in_text, compare_list_match_regex
 from .card import CardQuiz, CardTuple
-from .preview import save_preview_table
-from .exceptions import (FileExtensionException, DatabaseHeaderException, NoDataError,
-                         BadArgumentsException)
 
 
 class Flashcards:
-    SHEET_NAME = 'flashcards'
-
-    def __init__(self, in_file):
+    def __init__(self, in_file, sheet_name=None):
         """
 
         :param str|Path in_file: can be a folder, *.xlsx or *.zip
+        :param str sheet_name:
         """
+        if sheet_name is None:
+            sheet_name = 'flashcards'
+
         self.modified = time()
+        self._sheet_name = sheet_name
 
         if not isinstance(in_file, Path):
             in_file = Path(in_file)
 
         self.working_dir = in_file.parent.joinpath(in_file.stem)
 
-        self.image_dir = dict(
-            _path=self.working_dir.joinpath(in_file.stem)
-        )
         if in_file.exists():
             if in_file.suffix != '':
-                if in_file.suffix == '.xlsx':
-                    self.excel = in_file
+                self.excel = in_file
+                self.all_sheets, self.meta = pyexcel_export.get_data(str(self.excel))
 
-                    for file in in_file.parent.joinpath(in_file.stem).iterdir():
-                        self.image_dir[file.name] = file
-
-                else:
-                    raise FileExtensionException('Invalid file extension.')
-
-                raw_data, self.meta = pyexcel_export.get_data(self.excel)
-
-                self.data = self._load_raw_data(raw_data)
+                self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
             else:
                 self.excel = in_file.joinpath(in_file.stem + '.xlsx')
                 self.working_dir = in_file.joinpath(in_file.stem)
@@ -58,22 +46,13 @@ class Flashcards:
                 if not self.working_dir.exists():
                     self.working_dir.mkdir()
 
-                raw_data, self.meta = pyexcel_export.get_data(self.excel)
+                self.all_sheets, self.meta = pyexcel_export.get_data(str(self.excel))
 
-                self.data = self._load_raw_data(raw_data)
-
-                if in_file.joinpath(in_file.stem).exists():
-                    for file in in_file.joinpath(in_file.stem).iterdir():
-                        self.image_dir[file.name] = file
+                self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
 
         else:
-            if in_file.suffix == '.xlsx':
-                self.excel = in_file
-            else:
-                raise FileExtensionException('Invalid file extension.')
-
+            self.excel = in_file
             self.data = OrderedDict()
-            self.meta = pyexcel_export.get_meta()
 
     def __enter__(self):
         return self
@@ -94,12 +73,6 @@ class Flashcards:
         if out_file.is_dir():
             out_file = out_file.parent.joinpath(out_file.stem + '.xlsx')
 
-        if out_file.suffix != '.xlsx':
-            raise FileExtensionException('Unsupported file format.')
-
-        if len(self.data) == 0:
-            raise NoDataError("There is no data to save.")
-
         out_matrix = []
         header = [header_item.title() if header_item != 'id' else header_item
                   for header_item in list(self.data.values())[0]._fields]
@@ -108,151 +81,114 @@ class Flashcards:
         for card_id, card_tuple in self.data.items():
             out_matrix.append(list(card_tuple))
 
-        out_data = OrderedDict()
-        out_data[self.SHEET_NAME] = out_matrix
+        self.all_sheets[self._sheet_name] = out_matrix
 
-        pyexcel_export.save_data(out_file=out_file, data=out_data, meta=self.meta)
+        pyexcel_export.save_data(out_file=out_file, data=self.all_sheets, meta=self.meta)
 
-    def add(self, append_to=None, **kwargs):
-        """
-
-        :param append_to: if append to_is specified, the method self.append is used, with item_id = append_to
-        :param kwargs:
-        :return:
-        """
-        if append_to is None:
-            if 'front' not in kwargs.keys():
-                raise BadArgumentsException("'front' not in kwargs.keys()")
-
-            item_id = int(time() * 1000)
-            self.data[str(item_id)] = CardTuple(id=item_id)
-
-            print("Card id: {}".format(item_id))
-
-            return self.append(item_id, **kwargs)
-        else:
-            return self.append(append_to, **kwargs)
-
-    def append(self, item_id, **kwargs):
-        """
-
-        :param int|str item_id:
-        :param kwargs:
-        :return:
-        """
-        item_id = str(item_id)
-
-        if item_id not in self.data.keys():
-            raise KeyError("Cannot append to {}.".format(item_id))
-
-        if self.data[item_id].keywords:
-            orig_keywords = self.data[item_id].keywords
-        else:
-            orig_keywords = ''
-
-        if self.data[item_id].tags:
-            orig_tags = self.data[item_id].tags
-        else:
-            orig_tags = ''
-
-        keywords = kwargs.get('keywords', [])
-        keywords.extend(tag_reader(orig_keywords))
-        kwargs['keywords'] = to_raw_tags(keywords)
-
-        tags = kwargs.get('tags', [])
-        tags.extend(tag_reader(orig_tags))
-        kwargs['tags'] = to_raw_tags(tags)
-
-        orig_front = self.data[item_id].front
-        orig_back = self.data[item_id].back
-
-        if orig_front and orig_front[-1] != '\n':
-            kwargs['front'] = orig_front + '\n' + kwargs.get('front', '')
-        else:
-            kwargs['front'] = orig_front + kwargs.get('front', '')
-
-        if orig_back and orig_back[-1] != '\n':
-            kwargs['back'] = orig_back + '\n' + kwargs.get('back', '')
-        else:
-            kwargs['back'] = orig_back + kwargs.get('back', '')
-
-        self._cache_image(item_id, kwargs['front'])
-        self._cache_image(item_id, kwargs['back'])
-
-        self.data[item_id]._update(kwargs)
-
-        self.save()
-
-        card = CardQuiz(self.data[item_id], image_dir=self.image_dir)
-
-        display(card)
-        display(card.show())
-
-        # return card
-
-    def update(self, item_id: int, **kwargs):
-        item_id = str(item_id)
-
-        if item_id not in self.data.keys():
-            raise KeyError("Cannot reset to {}.".format(item_id))
-
-        if 'keywords' in kwargs.keys():
-            kwargs['keywords'] = to_raw_tags(kwargs['keywords'])
-        if 'tags' in kwargs.keys():
-            kwargs['tags'] = to_raw_tags(kwargs['tags'])
-
-        self._cache_image(item_id, kwargs.get('front', ''))
-        self._cache_image(item_id, kwargs.get('back', ''))
-
-        self.data[item_id]._update(kwargs)
-
-        self.save()
-
-        card = CardQuiz(self.data[item_id], image_dir=self.image_dir)
-
-        display(card)
-        display(card.show())
-
-        # return card
-
-    def _cache_image(self, item_id, text):
-        for url in get_url_images_in_text(text):
-            image_name = '{}-{}'.format(item_id, Path(url).name)
-            if not urlparse(url).netloc:
-                cache_image_from_file(image_name=image_name, image_path=url, image_dir=self.image_dir)
-            else:
-                cache_image_from_url(image_name=image_name, image_url=url, image_dir=self.image_dir)
-
-    def remove(self, item_id):
-        item_id = str(item_id)
-
-        if item_id not in self.data.keys():
-            raise KeyError("Cannot remove from {}.".format(item_id))
-
-        self.data.pop(item_id)
-        self.image_cleanup(item_id)
-
-        self.save()
-
-        return "{} removed.".format(item_id)
-
-    def image_cleanup(self, item_id):
-        record = self.data[str(item_id)]
-
-        for url in get_url_images_in_text(record.front + '\n' + record.back):
-            image_name = '{}-{}'.format(record.id, Path(url).name)
-
-            if image_name in self.image_dir.keys():
-                self.image_dir.pop(image_name)
-
-                print('Image {} deleted from cache'.format(image_name))
-
-            if self.image_dir['_path'].joinpath(image_name).exists():
-                self.image_dir['_path'].joinpath(image_name).unlink()
-
-                print('Image {} deleted from image folder'.format(image_name))
-
-        return 'Succeeded.'
+    # def add(self, append_to=None, **kwargs):
+    #     """
+    #
+    #     :param append_to: if append to_is specified, the method self.append is used, with item_id = append_to
+    #     :param kwargs:
+    #     :return:
+    #     """
+    #     if append_to is None:
+    #         item_id = int(time() * 1000)
+    #         self.data[str(item_id)] = CardTuple()
+    #
+    #         print("Card id: {}".format(item_id))
+    #
+    #         return self.append(item_id, **kwargs)
+    #     else:
+    #         return self.append(append_to, **kwargs)
+    #
+    # def append(self, item_id, **kwargs):
+    #     """
+    #
+    #     :param int|str item_id:
+    #     :param kwargs:
+    #     :return:
+    #     """
+    #     item_id = str(item_id)
+    #
+    #     if item_id not in self.data.keys():
+    #         raise KeyError("Cannot append to {}.".format(item_id))
+    #
+    #     if self.data[item_id].keywords:
+    #         orig_keywords = self.data[item_id].keywords
+    #     else:
+    #         orig_keywords = ''
+    #
+    #     if self.data[item_id].tags:
+    #         orig_tags = self.data[item_id].tags
+    #     else:
+    #         orig_tags = ''
+    #
+    #     keywords = kwargs.get('keywords', [])
+    #     keywords.extend(tag_reader(orig_keywords))
+    #     kwargs['keywords'] = to_raw_tags(keywords)
+    #
+    #     tags = kwargs.get('tags', [])
+    #     tags.extend(tag_reader(orig_tags))
+    #     kwargs['tags'] = to_raw_tags(tags)
+    #
+    #     orig_front = self.data[item_id].front
+    #     orig_back = self.data[item_id].back
+    #
+    #     if orig_front and orig_front[-1] != '\n':
+    #         kwargs['front'] = orig_front + '\n' + kwargs.get('front', '')
+    #     else:
+    #         kwargs['front'] = orig_front + kwargs.get('front', '')
+    #
+    #     if orig_back and orig_back[-1] != '\n':
+    #         kwargs['back'] = orig_back + '\n' + kwargs.get('back', '')
+    #     else:
+    #         kwargs['back'] = orig_back + kwargs.get('back', '')
+    #
+    #     self.data[item_id]._update(kwargs)
+    #
+    #     self.save()
+    #
+    #     card = CardQuiz(int(item_id), self.data[item_id])
+    #
+    #     display(card)
+    #     display(card.show())
+    #
+    #     # return card
+    #
+    # def update(self, item_id: int, **kwargs):
+    #     item_id = str(item_id)
+    #
+    #     if item_id not in self.data.keys():
+    #         raise KeyError("Cannot reset to {}.".format(item_id))
+    #
+    #     if 'keywords' in kwargs.keys():
+    #         kwargs['keywords'] = to_raw_tags(kwargs['keywords'])
+    #     if 'tags' in kwargs.keys():
+    #         kwargs['tags'] = to_raw_tags(kwargs['tags'])
+    #
+    #     self.data[item_id]._update(kwargs)
+    #
+    #     self.save()
+    #
+    #     card = CardQuiz(int(item_id), self.data[item_id])
+    #
+    #     display(card)
+    #     display(card.show())
+    #
+    #     # return card
+    #
+    # def remove(self, item_id):
+    #     item_id = str(item_id)
+    #
+    #     if item_id not in self.data.keys():
+    #         raise KeyError("Cannot remove from {}.".format(item_id))
+    #
+    #     self.data.pop(item_id)
+    #
+    #     self.save()
+    #
+    #     return "{} removed.".format(item_id)
 
     def find(self, keyword_regex: str = '', tags=None):
         if tags is None:
@@ -274,57 +210,94 @@ class Flashcards:
 
         for item_id in matched_entries:
             if len(tags) == 0:
-                yield self.data[item_id]
+                yield item_id, self.data[item_id]
             elif compare_list_match_regex(tags, tag_reader(self.data[item_id].tags)):
-                yield self.data[item_id]
+                yield item_id, self.data[item_id]
 
-    def preview(self, keyword_regex: str='', tags: list=None,
-                file_format='handsontable', width=800, height=300):
+    def view(self, keyword_regex: str = '', tags: list = None, width=800, height=500):
+        renderers = {
+            1: 'markdownRenderer',
+            2: 'markdownRenderer'
+        }
+        config = {
+            'colHeaders': ['id'] + list(CardTuple._fields),
+            'rowHeaders': False
+        }
 
-        file_output = self.working_dir.joinpath('preview.{}.html'.format(file_format))
-
+        filename = Path('temp.handsontable.html')
         try:
-            return save_preview_table(array=[CardTuple._fields] +
-                                            [list(item) for item in self.find(keyword_regex, tags)],
-                                      dest_file_name=str(file_output.relative_to('.')),
-                                      image_dir=self.image_dir,
-                                      markdown_cols=[1, 2],
-                                      width=width, height=height)
-        finally:
-            Timer(5, file_output.unlink).start()
+            table = view_table(data=list(reversed([[i] + list(record.to_formatted_tuple())
+                                                   for i, record in self.find(keyword_regex, tags)])),
+                               width=width,
+                               height=height,
+                               renderers=renderers,
+                               config=config,
+                               filename=str(filename),
+                               autodelete=False)
+            with filename.open('r') as f:
+                soup = BeautifulSoup(f.read(), 'html5lib')
 
-    def quiz(self, keyword_regex: str='', tags: list=None, exclude: list =None, image_only=False):
+            style = soup.new_tag('style')
+
+            with Path('jupyter_flashcards/renderer/markdown-hot.css').open('r') as f:
+                style.append(f.read())
+
+            soup.head.append(style)
+
+            div = soup.new_tag('div')
+
+            js_markdown = soup.new_tag('script',
+                                       src='https://cdn.rawgit.com/showdownjs/showdown/1.8.6/dist/showdown.min.js')
+            js_custom = soup.new_tag('script')
+
+            with Path('jupyter_flashcards/renderer/markdown-hot.js').open('r') as f:
+                js_custom.append(f.read())
+
+            div.append(js_markdown)
+            div.append(js_custom)
+
+            script_tag = soup.find('script', {'id': 'generateHandsontable'})
+            soup.body.insert(soup.body.contents.index(script_tag), div)
+
+            with filename.open('w') as f:
+                f.write(str(soup))
+
+            return table
+        finally:
+            Timer(5, filename.unlink).start()
+            # pass
+
+    def iter_quiz(self, keyword_regex: str = '', tags: list = None, exclude: list = None, image_only=False,
+                  begin: int = None, last: int = None):
         if exclude is None:
             exclude = list()
-        else:
-            exclude = [int(item_id) for item_id in exclude]
 
-        all_records = [record for record in self.find(keyword_regex, tags) if record.id not in exclude]
+        all_records = list(reversed([(i, record)
+                                     for i, record in self.find(keyword_regex, tags)
+                                     if i not in exclude]))[begin:last]
 
         if image_only:
-            all_records = [record for record in all_records
+            all_records = [(i, record) for i, record in all_records
                            if len(get_url_images_in_text(record.front)) > 0]
 
         if len(all_records) == 0:
             return "There is no record matching the criteria."
 
-        record = random.choice(all_records)
+        random.shuffle(all_records)
+        for i, record in all_records:
+            yield CardQuiz(i, record)
 
-        return CardQuiz(record, image_dir=self.image_dir)
+    def quiz(self, keyword_regex: str = '', tags: list = None, exclude: list = None, image_only=False,
+             begin: int = None, last: int = None):
+        return next(self.iter_quiz(keyword_regex, tags, exclude, image_only, begin=begin, last=last))
 
-    def _load_raw_data(self, raw_data):
-        if self.SHEET_NAME not in raw_data.keys():
-            raise DatabaseHeaderException('Invalid Excel database.')
-
+    @staticmethod
+    def _load_raw_data(raw_data, sheet_name):
         data = OrderedDict()
 
-        headers = [header_item.lower() for header_item in raw_data[self.SHEET_NAME][0]]
-        if headers[0] != 'id':
-            raise DatabaseHeaderException('Invalid Excel database.')
-
-        for row in raw_data[self.SHEET_NAME][1:]:
-            if row[0]:
-                data[str(row[0])] = CardTuple(**dict(zip(headers, row)))
+        headers = [header_item.lower().replace(' ', '_') for header_item in raw_data[sheet_name][0]]
+        for i, row in enumerate(raw_data[sheet_name][1:]):
+            data[i] = CardTuple(**dict(zip(headers, row)))
 
         return data
 
@@ -338,24 +311,18 @@ class Flashcards:
         return tags
 
     def view_id(self, item_id):
-        card = CardQuiz(self.data[str(item_id)], image_dir=self.image_dir)
+        card = CardQuiz(item_id, self.data[str(item_id)])
 
         display(card)
         display(card.show())
 
         # return card
 
+    @property
+    def sheet_name(self):
+        return self._sheet_name
 
-def compare_list_match_regex(subset, superset):
-    def _sub_compare(sub_item):
-        for super_item in superset:
-            if re.search(sub_item, super_item, flags=re.IGNORECASE):
-                return True
-
-        return False
-
-    result = []
-    for sub_item in subset:
-        result.append(_sub_compare(sub_item))
-
-    return all(result)
+    @sheet_name.setter
+    def sheet_name(self, value):
+        self._sheet_name = value
+        self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
