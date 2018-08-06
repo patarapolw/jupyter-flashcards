@@ -1,11 +1,12 @@
 from markdown import markdown
 from IPython.display import HTML
-from typing import NamedTuple
 import dateutil
-from datetime import datetime
+from datetime import datetime, timedelta
+from namedlist import namedlist
 
 from .utils import parse_markdown
 from .tags import tag_reader
+from .srs import SRS
 
 
 class CardQuiz:
@@ -13,7 +14,7 @@ class CardQuiz:
         """
 
         :param int card_id:
-        :param dict|OrderedDict record:
+        :param CardTuple record:
         """
         assert isinstance(record, CardTuple)
 
@@ -32,15 +33,34 @@ class CardQuiz:
 
         return HTML(html)
 
+    def next_srs(self):
+        if not self.record.srs_level:
+            self.record.srs_level = str(1)
+        else:
+            self.record.srs_level = str(int(self.record.srs_level) + 1)
 
-class CardTuple(NamedTuple):
-    front: str = ''
-    back: str = ''
-    keywords: str = ''
-    tags: str = ''
-    srs_level: str = ''
-    next_review: str = ''
+        self.record.real_next_review = (datetime.now(datetime.now().astimezone().tzinfo)
+                                        + SRS.get(int(self.record.srs_level), timedelta(weeks=4)))
 
+    correct = right = next_srs
+
+    def previous_srs(self, duration=timedelta(hours=4)):
+        if self.record.srs_level and int(self.record.srs_level) > 1:
+            self.record.srs_level = str(int(self.record.srs_level) - 1)
+
+        self.bury(duration)
+
+    incorrect = wrong = previous_srs
+
+    def bury(self, duration=timedelta(hours=4)):
+        self.record.real_next_review = (datetime.now(datetime.now().astimezone().tzinfo)
+                                        + duration)
+
+
+CardNL = namedlist('CardNL', ['front', 'back', 'keywords', 'tags', 'srs_level', 'next_review'], default='')
+
+
+class CardTuple(CardNL):
     def to_formatted_tuple(self):
         return (self.front, self.back, self.keywords, self.tags,
                 self.srs_level, self.next_review)
@@ -50,7 +70,7 @@ class CardTuple(NamedTuple):
         if self.next_review:
             return dateutil.parser.parse(self.next_review)
         else:
-            return datetime.now()
+            return datetime.now(datetime.now().astimezone().tzinfo)
 
     @real_next_review.setter
     def real_next_review(self, value):

@@ -1,6 +1,7 @@
 from pathlib import Path
 from collections import OrderedDict
 from time import time
+from datetime import datetime
 import re
 import random
 from threading import Timer
@@ -31,8 +32,6 @@ class Flashcards:
         if not isinstance(in_file, Path):
             in_file = Path(in_file)
 
-        self.working_dir = in_file.parent.joinpath(in_file.stem)
-
         if in_file.exists():
             if in_file.suffix != '':
                 self.excel = in_file
@@ -41,11 +40,6 @@ class Flashcards:
                 self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
             else:
                 self.excel = in_file.joinpath(in_file.stem + '.xlsx')
-                self.working_dir = in_file.joinpath(in_file.stem)
-
-                if not self.working_dir.exists():
-                    self.working_dir.mkdir()
-
                 self.all_sheets, self.meta = pyexcel_export.get_data(str(self.excel))
 
                 self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
@@ -65,13 +59,10 @@ class Flashcards:
 
     def save(self, out_file=None):
         if out_file is None:
-            out_file = self.working_dir
+            out_file = self.excel
 
         if not isinstance(out_file, Path):
             out_file = Path(out_file)
-
-        if out_file.is_dir():
-            out_file = out_file.parent.joinpath(out_file.stem + '.xlsx')
 
         out_matrix = []
         header = [header_item.title() if header_item != 'id' else header_item
@@ -267,7 +258,8 @@ class Flashcards:
             Timer(5, filename.unlink).start()
             # pass
 
-    def iter_quiz(self, keyword_regex: str = '', tags: list = None, exclude: list = None, image_only=False,
+    def iter_quiz(self, keyword_regex: str = '', tags: list = None,
+                  exclude: list = None, image=None, due=None,
                   begin: int = None, last: int = None):
         if exclude is None:
             exclude = list()
@@ -276,9 +268,21 @@ class Flashcards:
                                      for i, record in self.find(keyword_regex, tags)
                                      if i not in exclude]))[begin:last]
 
-        if image_only:
-            all_records = [(i, record) for i, record in all_records
-                           if len(get_url_images_in_text(record.front)) > 0]
+        if image is not None:
+            if image:
+                all_records = [(i, record) for i, record in all_records
+                               if len(get_url_images_in_text(record.front)) > 0]
+            else:
+                all_records = [(i, record) for i, record in all_records
+                               if len(get_url_images_in_text(record.front)) == 0]
+
+        if due is not None:
+            if due:
+                all_records = [(i, record) for i, record in all_records
+                               if record.real_next_review < datetime.now(datetime.now().astimezone().tzinfo)]
+            else:
+                all_records = [(i, record) for i, record in all_records
+                               if record.real_next_review >= datetime.now(datetime.now().astimezone().tzinfo)]
 
         if len(all_records) == 0:
             return "There is no record matching the criteria."
@@ -287,9 +291,12 @@ class Flashcards:
         for i, record in all_records:
             yield CardQuiz(i, record)
 
-    def quiz(self, keyword_regex: str = '', tags: list = None, exclude: list = None, image_only=False,
+    def quiz(self, keyword_regex: str = '', tags: list = None,
+             exclude: list = None, image=None, due=None,
              begin: int = None, last: int = None):
-        return next(self.iter_quiz(keyword_regex, tags, exclude, image_only, begin=begin, last=last))
+        return next(self.iter_quiz(keyword_regex, tags,
+                                   exclude=exclude, image=image, due=due,
+                                   begin=begin, last=last))
 
     @staticmethod
     def _load_raw_data(raw_data, sheet_name):
@@ -326,3 +333,9 @@ class Flashcards:
     def sheet_name(self, value):
         self._sheet_name = value
         self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
+
+    def iter_due(self):
+        yield from self.iter_quiz(due=True)
+
+    def due(self):
+        return len(tuple(self.iter_due()))
