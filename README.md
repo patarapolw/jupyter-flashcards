@@ -24,7 +24,12 @@ The image folder auto-caches any images you add in the markdown (both online and
 Show front side of the card on Jupyter Notebook. Images are also included (no need to be inside markdown tags, or img tags.) Markdown is rendered to HTML.
 >>> card.show()
 back side of the card is show. Also render images, markdown and HTML.
-
+>>> card.correct()
+Add to SRS +1 queue.
+>>> card.wrong()
+Add to SRS -1 queue.
+>>> card.bury()
+Postpone the review of this card by 4 hours (default), without changing the SRS order.
 ```
 In this case, the images are always cached at `foo/` folder for offline use.
 

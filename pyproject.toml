@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jupyter-flashcards"
-version = "0.2"
+version = "0.2.1"
 description = "Jupyter notebook utility to view flashcards in both Excel and markdown format."
 authors = ["Pacharapol Withayasakpunt <patarapolw@gmail.com>"]
 license = "Apache-2.0"
