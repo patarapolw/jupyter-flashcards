@@ -31,7 +31,6 @@ Add to SRS -1 queue.
 >>> card.bury()
 Postpone the review of this card by 4 hours (default), without changing the SRS order.
 ```
-In this case, the images are always cached at `foo/` folder for offline use.
 
 For more information, see https://github.com/patarapolw/jupyter-flashcards/tree/master/docs/
 
