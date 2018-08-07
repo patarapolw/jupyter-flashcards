@@ -8,7 +8,8 @@ from threading import Timer
 from IPython.display import display
 from bs4 import BeautifulSoup
 
-import pyexcel_export
+import pyexcel
+import pyexcel_xlsxwx
 from pyhandsontable import view_table
 
 from .tags import tag_reader
@@ -35,12 +36,12 @@ class Flashcards:
         if in_file.exists():
             if in_file.suffix != '':
                 self.excel = in_file
-                self.all_sheets, self.meta = pyexcel_export.get_data(str(self.excel))
+                self.all_sheets = pyexcel.get_book_dict(file_name=str(self.excel))
 
                 self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
             else:
                 self.excel = in_file.joinpath(in_file.stem + '.xlsx')
-                self.all_sheets, self.meta = pyexcel_export.get_data(str(self.excel))
+                self.all_sheets = pyexcel.get_book_dict(str(self.excel))
 
                 self.data = self._load_raw_data(self.all_sheets, self._sheet_name)
 
@@ -74,7 +75,7 @@ class Flashcards:
 
         self.all_sheets[self._sheet_name] = out_matrix
 
-        pyexcel_export.save_data(out_file=out_file, data=self.all_sheets, meta=self.meta)
+        pyexcel_xlsxwx.save_data(out_file=out_file, data=self.all_sheets)
 
     # def add(self, append_to=None, **kwargs):
     #     """
